@@ -1,6 +1,8 @@
 import { Play } from "phosphor-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as zod from "zod"; // precisou fazer assim por a bibliotéca não tem o export default
 import {
     CountdownContainer,
     FormContainer,
@@ -11,19 +13,61 @@ import {
     TaskInput,
 } from "./styles";
 
-export function Home() {
-    const { register, handleSubmit, watch } = useForm();
+const newTaskFormValidationSchema = zod.object({
+    task: zod.string().min(1, "Informe a tarefa"),
+    minutesAmount: zod
+        .number()
+        .min(5, "A tarefa deve ter no mínimo 5 minutos")
+        .max(60, "São permitidas tarefas ate 60 minutos"),
+});
 
-    function createNewTask(data: any) {
-        console.log(data);
+// interface NewTaskFormData {
+//     task: string;
+//     minutesAmount: number;
+// }
+
+// sempre que utilizar uma variável do javascript no typescript como tipagem, é necessário o typeof
+type NewTaskFormData = zod.infer<typeof newTaskFormValidationSchema>;
+
+interface Cycle {
+    id: string;
+    task: string;
+    minutesAmount: number;
+}
+
+export function Home() {
+    const [cycles, setCycles] = useState<Cycle[]>([]);
+    const [activeCycleId, SetActiveCycleId] = useState<string | null>(null);
+
+    // const { register, handleSubmit, watch, formState } = ...
+    const { register, handleSubmit, watch, reset } = useForm<NewTaskFormData>({
+        resolver: zodResolver(newTaskFormValidationSchema),
+        defaultValues: {
+            task: "",
+            minutesAmount: 0,
+        },
+    });
+
+    function handleCreateNewTask(data: NewTaskFormData) {
+        const newCycle: Cycle = {
+            id: String(new Date().getDate()),
+            task: data.task,
+            minutesAmount: data.minutesAmount,
+        };
+
+        setCycles((state) => [...state, newCycle]);
+        SetActiveCycleId(newCycle.id);
+        reset();
     }
 
+    // console.log(formState.errors);
+    const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
     const task = watch("task");
     const isSubmitDisabled = !task;
 
     return (
         <HomeContainer>
-            <form onSubmit={handleSubmit(createNewTask)} action="">
+            <form onSubmit={handleSubmit(handleCreateNewTask)} action="">
                 <FormContainer>
                     <label htmlFor="task">Vou trabalhar em</label>
                     <TaskInput
@@ -62,7 +106,10 @@ export function Home() {
                     <span>0</span>
                 </CountdownContainer>
 
-                <StartCountdownContainer disabled={isSubmitDisabled} type="submit">
+                <StartCountdownContainer
+                    disabled={isSubmitDisabled}
+                    type="submit"
+                >
                     <Play size={24} />
                     Começar
                 </StartCountdownContainer>
