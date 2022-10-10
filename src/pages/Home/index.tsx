@@ -12,7 +12,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CyclesContext } from "../../contexts/CyclesContex";
 
-const newTaskFormValidationSchema = zod.object({
+const newCycleFormValidationSchema = zod.object({
     task: zod.string().min(1, "Informe a tarefa"),
     minutesAmount: zod
         .number()
@@ -21,19 +21,24 @@ const newTaskFormValidationSchema = zod.object({
 });
 
 // sempre que utilizar uma variável do javascript no typescript como tipagem, é necessário o typeof
-type NewTaskFormData = zod.infer<typeof newTaskFormValidationSchema>;
+type NewCycleFormData = zod.infer<typeof newCycleFormValidationSchema>;
 
 export function Home() {
     const { activeCycle, createNewCycle, interruptCurrentCycle, } = useContext(CyclesContext);
 
-    const newCycleForm = useForm<NewTaskFormData>({
-        resolver: zodResolver(newTaskFormValidationSchema), defaultValues: {
+    const newCycleForm = useForm<NewCycleFormData>({
+        resolver: zodResolver(newCycleFormValidationSchema), defaultValues: {
             task: "",
             minutesAmount: 0,
         },
     });
 
-    const { handleSubmit, watch, /* reset */ } = newCycleForm;
+    const { handleSubmit, watch, reset } = newCycleForm;
+
+    function handleCreateNewCycle(data: NewCycleFormData) {
+        createNewCycle(data);
+        reset();
+    }
 
     // console.log(formState.errors);
     const task = watch("task");
@@ -41,7 +46,7 @@ export function Home() {
 
     return (
         <HomeContainer>
-            <form onSubmit={handleSubmit(createNewCycle)} action="">
+            <form onSubmit={handleSubmit(handleCreateNewCycle)} action="">
                 <FormProvider {...newCycleForm}>
                     <NewCycleFrom /> 
                 </FormProvider>
