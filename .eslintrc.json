@@ -1,6 +1,6 @@
 {
     "extends": "@rocketseat/eslint-config/react",
-    "code": 120,
+    "code": 110,
     "rules": {
       "prettier/prettier":[
         "error",
